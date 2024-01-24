@@ -27,9 +27,9 @@ with st.expander('Analyze text'):
     
 
 def score(paragraph):
-    sentences = tb(paragraph).sentences
+    blobs = tb(paragraph).sentences
     # Analyze sentiment for each sentence
-    sentence_polarities = [sentence.sentiment.polarity for sentence in sentences]
+    sentence_polarities = [blob.sentiment.polarity for blob in blobs]
     return  sum(sentence_polarities) / len(sentence_polarities)
 
 def analyze(x):
