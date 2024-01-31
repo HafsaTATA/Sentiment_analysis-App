@@ -1,55 +1,99 @@
-from textblob import TextBlob as tb
-import streamlit as st
-import pandas as pd
-import numpy as np
-import cleantext
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from logger import Logger
+import json
 
-# Create a placeholder DataFrame for testing
-data = {'Column1': np.random.rand(10), 'Column2': np.random.randint(0, 100, 10)}
-my_data = pd.DataFrame(data)
+from tweet import Tweet
+from excel import Excel
 
-# Title
-st.title("Sentiment Analizer App")
 
-# Sidebar
-st.sidebar.header("Settings")
-st.sidebar.text_input("Enter a key word")
+log = Logger()
 
-# Main content
+def main(keyword: str, conf: dict):
+    global log
+    log.warning("Loading configurations...")
+    if not conf["token"]:
+        log.warning("Please set your access token in './files/conf.json' file")
+        log.warning("For more info visit this link: https://youtu.be/uHOz7BSPXCo")
+        input("\n\tPress any key to exit...")
+        return
 
-with st.expander('Analyze text'):
-    text=st.text_input('Text here: ')
-    if text:
-        blob=tb(text)
-        st.write('Polarity: ', round(blob.sentiment.polarity,2))
-        st.write('Subjectivity: ', round(blob.sentiment.subjectivity,2))
+    driver = open_driver(conf["headless"], conf["userAgent"])
+    driver.get("https://twitter.com/")
+    set_token(driver, conf["token"])
+    driver.get("https://twitter.com/")
 
-    
+    log.warning("Starting...")
+    data = profile_search(driver, keyword)
 
-def score(paragraph):
-    blobs = tb(paragraph).sentences
-    # Analyze sentiment for each sentence
-    sentence_polarities = [blob.sentiment.polarity for blob in blobs]
-    return  sum(sentence_polarities) / len(sentence_polarities)
+    log.warning("Saving...")
+    Excel(data, conf["output_form"])
 
-def analyze(x):
-    if x>=0.5:
-        return 'Great'
-    elif x<=-0.5:
-        return 'Bad'
-    elif x>-0.5 and x<0:
-        return 'Mid'
-    elif x==0:
-        return 'Neutral'
-    else:
-        return 'good'
-    
-with st.expander('Analyze csv'):
-    file=st.file_uploader('Upload file: ')
-    if file:
-        dataFrame=pd.read_excel(file)
-        dataFrame['score']= dataFrame['tweets'].apply(score)
-        dataFrame['analysis']=dataFrame['score'].apply(analyze)
-        st.write(dataFrame.head())
+
+def profile_search(
+        driver: webdriver.Chrome,keyword: str
+):
+    url = "https://twitter.com/search?q="+keyword
+    num = 6
+    driver.get(url)
+
+    log.warning("Fetching...")
+    Ad = []
+    results = []
+    while len(results) < num:
+        tweet = Tweet(driver, Ad)
+
+        data = {}
+
+        data["URL"] = tweet.get_url()
+        data["Date"] = tweet.get_date()
+        data["Text"] = tweet.get_text()
+        data["Lang"] = tweet.get_lang()
+        data["Likes"] = tweet.get_num_likes()
+        data["Retweets"] = tweet.get_num_retweet()
+        data["Replies"] = tweet.get_num_reply()
+
+        results.append(data)
+
+        json.dump(results, open("./files/temp.json", "w"))
         
+        log.info(f"{len(results) + 1} : {data['URL']}")
+
+    return results
+
+
+def open_driver(headless: bool, agent: str) -> webdriver.Chrome:
+    options = webdriver.ChromeOptions()
+    options.add_argument('--log-level=3')
+    options.add_argument('ignore-certificate-errors')
+
+    if headless:
+        options.add_argument('--headless')
+
+    options.add_argument(f'user-agent={agent}')
+
+    driver = webdriver.Chrome(options=options)
+    return driver
+
+
+
+def set_token(
+        driver: webdriver.Chrome,
+        token: str
+) -> None:
+    src = f"""
+            let date = new Date();
+            date.setTime(date.getTime() + (7*24*60*60*1000));
+            let expires = "; expires=" + date.toUTCString();
+
+            document.cookie = "auth_token={token}"  + expires + "; path=/";
+        """
+    driver.execute_script(src)
+
+def load_conf() -> dict:
+    with open("./files/conf.json", "r") as file:
+        return json.loads(file.read())
+
+
+
 
