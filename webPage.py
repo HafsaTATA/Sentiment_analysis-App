@@ -28,8 +28,8 @@ with st.expander('Analyze csv'):
     file=st.file_uploader('Upload file: ')
     if file:
         dataFrame=pd.read_excel(file)
-        dataFrame['score']= dataFrame['tweets'].apply(score)
-        dataFrame['analysis']=dataFrame['score'].apply(analyze)
+        #dataFrame['score']= dataFrame['tweets'].apply(score)
+        #dataFrame['analysis']=dataFrame['score'].apply(analyze)
         st.write(dataFrame.head())
         
 #linking test:

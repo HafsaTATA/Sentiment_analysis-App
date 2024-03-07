@@ -90,7 +90,7 @@ class Tweet:
             break
 
 
-    def __get_tweet_url(self) -> (str, bool):
+    def __get_tweet_url(self) -> (str, bool): # type: ignore
         urls = self.tweet.find_elements(By.CSS_SELECTOR, "a")
         url = urls[3].get_attribute("href")
 

@@ -1,8 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from logger import Logger
 import json
 
+from logger import Logger
 from tweet import Tweet
 from excel import Excel
 
@@ -14,7 +14,6 @@ def main(keyword: str, conf: dict):
     log.warning("Loading configurations...")
     if not conf["token"]:
         log.warning("Please set your access token in './files/conf.json' file")
-        log.warning("For more info visit this link: https://youtu.be/uHOz7BSPXCo")
         input("\n\tPress any key to exit...")
         return
 
@@ -34,7 +33,7 @@ def profile_search(
         driver: webdriver.Chrome,keyword: str
 ):
     url = "https://twitter.com/search?q="+keyword
-    num = 6
+    num = 400
     driver.get(url)
 
     log.warning("Fetching...")
@@ -61,7 +60,7 @@ def profile_search(
 
     return results
 
-
+#creates and configures a Chrome WebDriver instance
 def open_driver(headless: bool, agent: str) -> webdriver.Chrome:
     options = webdriver.ChromeOptions()
     options.add_argument('--log-level=3')

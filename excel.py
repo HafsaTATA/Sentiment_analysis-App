@@ -25,7 +25,7 @@ def Excel(
 
     wb.save('Excel.xls')
     # Replace 'Excel.xls' with the actual path to your Excel file
-    process_excel_file('Excel.xls')
+   # process_excel_file('Excel.xls')
 
 
 #sentiment analysis:
